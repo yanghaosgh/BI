@@ -61,7 +61,13 @@ public class Filter4Pay {
 
 		@Override
 		protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, LongWritable, Text>.Context context) throws IOException, InterruptedException {
-			json = JSONObject.fromObject(value.toString());
+			try {
+				json = JSONObject.fromObject(value.toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
+
 			StringBuilder sb = new StringBuilder();
 
 			long ts = json.getLong("ts");
@@ -79,10 +85,17 @@ public class Filter4Pay {
 			sb.append(json.getString("title").replace(sep, "") + sep);
 			sb.append(json.getString("url_img") + sep);
 
-			JSONObject events = json.getJSONObject("events");
+			JSONObject events = null;
+			try {
+				events = json.getJSONObject("events");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
 			String banner_id = JsonUtils.getValue(events, "banner_id", "");
 
 			sb.append(banner_id + sep);
+			sb.append(JsonUtils.getValue(events, "thread_id", "") + sep);
 			sb.append(JsonUtils.getValue(events, "topic_id", "") + sep);
 			sb.append(JsonUtils.getValue(events, "tuan_id", "") + sep);
 			sb.append(JsonUtils.getValue(events, "prefecture_id", "") + sep);
@@ -118,6 +131,7 @@ public class Filter4Pay {
 
 			sb.append(sep + JsonUtils.getValue(events, "utm_source", ""));
 			sb.append(sep + JsonUtils.getValue(events, "position", ""));
+			sb.append(sep + JsonUtils.getValue(events, "tab_id", ""));
 
 			text.set(sb.toString());
 			context.write(key, text);
